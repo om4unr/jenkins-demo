@@ -1,16 +1,19 @@
-throttle(['throttleDocker']) {
-  node('docker') {
-    wrap([$class: 'AnsiColorBuildWrapper']) {
-      try{
-        stage('Setup') {
+pipeline {
+  agent { 
+    node { 
+      label 'docker'
+    }
+  }
+  stages {
+	stage('Setup') {
           checkout scm
           sh '''
             ./ci/docker-down.sh
             ./ci/docker-up.sh
           '''
         }
-        stage('Test'){
-          parallel (
+	stage('Test'){
+        parallel (
             "unit": {
               sh '''
                 ./ci/test/unit.sh
@@ -23,19 +26,15 @@ throttle(['throttleDocker']) {
             }
           )
         }
-        stage('Capacity Test') {
+	stage('Capacity Test') {
           sh '''
             ./ci/test/stress.sh
           '''
         }
-      }
-      finally {
-        stage('Cleanup') {
+    stage('Cleanup') {
           sh '''
             ./ci/docker-down.sh
           '''
         }
-      }
-    }
   }
 }
